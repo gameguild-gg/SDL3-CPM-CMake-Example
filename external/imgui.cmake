@@ -2,7 +2,7 @@
 string(TIMESTAMP BEFORE "%s")
 CPMAddPackage(
         NAME IMGUI
-        URL "https://github.com/ocornut/imgui/archive/refs/tags/v1.89.2.zip"
+        URL "https://github.com/ocornut/imgui/archive/refs/tags/v1.92.9b.zip"
 )
 IF(IMGUI_ADDED)
     add_library(IMGUI STATIC)
@@ -16,8 +16,8 @@ IF(IMGUI_ADDED)
             ${IMGUI_SOURCE_DIR}/imgui.cpp
 
             PRIVATE
-            ${IMGUI_SOURCE_DIR}/backends/imgui_impl_sdlrenderer.cpp
-            ${IMGUI_SOURCE_DIR}/backends/imgui_impl_sdl.cpp
+            ${IMGUI_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+            ${IMGUI_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
             ${IMGUI_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
             )
     target_include_directories( IMGUI
@@ -25,14 +25,9 @@ IF(IMGUI_ADDED)
             PUBLIC ${IMGUI_SOURCE_DIR}/backends
             )
     find_package(OpenGL REQUIRED)
-    if(EMSCRIPTEN)
-        target_link_libraries(IMGUI PUBLIC ${OPENGL_gl_LIBRARY} SDL2 ${CMAKE_DL_LIBS})
-    else()
-        target_link_libraries(IMGUI PUBLIC ${OPENGL_gl_LIBRARY} SDL2-static ${CMAKE_DL_LIBS})
-    endif()
+    target_link_libraries(IMGUI PUBLIC ${OPENGL_gl_LIBRARY} SDL3::SDL3 ${CMAKE_DL_LIBS})
 ENDIF()
 include_directories(${IMGUI_SOURCE_DIR} ${IMGUI_SOURCE_DIR}/backends)
 string(TIMESTAMP AFTER "%s")
 math(EXPR DELTAIMGUI "${AFTER} - ${BEFORE}")
 MESSAGE(STATUS "IMGUI TIME: ${DELTAIMGUI}s")
-

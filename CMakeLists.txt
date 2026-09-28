@@ -17,8 +17,16 @@ LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/libs)
 # emscripten settings
 IF(DEFINED EMSCRIPTEN)
     message(STATUS "emscripten build")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Oz -s WASM=2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s ASYNCIFY -s FULL_ES2=1 -s USE_GLFW=3")
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -s WASM=2 -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s ASYNCIFY -s FULL_ES2=1 -s USE_GLFW=3")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Oz -sASYNCIFY -sFULL_ES2=1")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Oz -sASYNCIFY -sFULL_ES2=1")
+
+    # SDL3 is provided by the emscripten port (-sUSE_SDL=3), expose it as a target
+    if(NOT TARGET SDL3::SDL3)
+        add_library(SDL3::SDL3 INTERFACE IMPORTED)
+        set_target_properties(SDL3::SDL3 PROPERTIES
+                INTERFACE_COMPILE_OPTIONS "-sUSE_SDL=3"
+                INTERFACE_LINK_LIBRARIES "-sUSE_SDL=3")
+    endif()
 
     file(GLOB HTML "${CMAKE_CURRENT_SOURCE_DIR}/html/*")
     file(COPY ${HTML} DESTINATION ${CMAKE_BINARY_DIR}/bin/)
@@ -39,9 +47,9 @@ add_executable(demo2 main2.cpp)
 
 find_package(OpenGL REQUIRED)
 if(EMSCRIPTEN)
-    target_link_libraries(demo  PUBLIC SDL2        SDL2_image IMGUI)
-    target_link_libraries(demo2 PUBLIC SDL2        ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS} SDL2_image IMGUI)
+    target_link_libraries(demo  PUBLIC SDL3::SDL3 IMGUI)
+    target_link_libraries(demo2 PUBLIC SDL3::SDL3 ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS} IMGUI)
 ELSE()
-    target_link_libraries(demo  PUBLIC SDL2-static SDL2_image IMGUI)
-    target_link_libraries(demo2 PUBLIC SDL2-static ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS} SDL2_image IMGUI glew)
+    target_link_libraries(demo  PUBLIC SDL3::SDL3 SDL3_image::SDL3_image IMGUI)
+    target_link_libraries(demo2 PUBLIC SDL3::SDL3 SDL3_image::SDL3_image ${OPENGL_gl_LIBRARY} ${CMAKE_DL_LIBS} IMGUI glew)
 ENDIF()
