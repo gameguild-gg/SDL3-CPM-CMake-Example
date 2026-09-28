@@ -3,7 +3,7 @@ if(NOT DEFINED EMSCRIPTEN)
 
     CPMAddPackage(
         NAME "glew"
-        URL "https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz"
+            URL "https://github.com/nigels-com/glew/releases/download/glew-2.3.1/glew-2.3.1.tgz"
         SOURCE_SUBDIR "build/cmake"
         OPTIONS "BUILD_SHARED_LIBS OFF" "BUILD_UTILS OFF" "BUILD_32_BIT OFF" "BUILD_SINGLE_CONTEXT OFF" "GLEW_USE_STATIC_LIBS ON"
     )
