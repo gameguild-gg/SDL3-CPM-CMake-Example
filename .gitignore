@@ -37,4 +37,8 @@ cmake-build-*/
 out/
 .vs/
 bin-*/
+build/
 external/emsdk/
+imgui.ini
+
+.omo/
