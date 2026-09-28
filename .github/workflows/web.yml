@@ -7,35 +7,43 @@ on:
   pull_request:
     branches:
       - '*'
+  workflow_dispatch:
+
+# Permissions required to deploy to GitHub Pages without any manual setup.
+# The deploy job enables the Pages site (build_type=workflow) via the API,
+# so the repo owner does not need to touch the Settings -> Pages UI.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 env:
   BUILD_TYPE: MinSizeRel
 
 jobs:
-  linux-emscripten:
+  build:
     runs-on: ubuntu-latest
     container: emscripten/emsdk
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Cache
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             /emsdk/upstream/emscripten/cache/
             bin-emscripten/_deps
             bin-emscripten/libs
-          key: emscripten
-
-      - name: Rsync
-        run: apt update
-
-      - name: Rsync
-        run: apt install -y rsync
+          key: emscripten-sdl3
 
       - name: Emscripten Build
         run: ./scripts/emscripten-build.sh
@@ -43,8 +51,30 @@ jobs:
       - name: Clean emscripten bin assets
         run: rm -rf bin-emscripten/bin/assets/ bin-emscripten/bin/*.a
 
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: bin-emscripten/bin/ # The folder the action should deploy.
-          single-commit: true
+          path: bin-emscripten/bin/ # the folder the action should deploy.
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Enable GitHub Pages with source = "GitHub Actions" so the repo owner
+      # does not need to change anything in Settings -> Pages.
+      # POST creates the site; PATCH switches it if it already exists
+      # (e.g. previously enabled for a branch like gh-pages).
+      - name: "Enable GitHub Pages (source: GitHub Actions)"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST repos/${{ github.repository }}/pages -f build_type=workflow 2>/dev/null \
+          || gh api --method PATCH repos/${{ github.repository }}/pages -f build_type=workflow
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
